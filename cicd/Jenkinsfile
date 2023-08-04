@@ -1,0 +1,39 @@
+pipeline {
+  agent any
+  
+  stages {
+    
+    stage('Deploy MR') {
+        when {
+            changeRequest target: 'main'
+        }
+      steps {
+          sh 'docker build --tag janduchnowski/mr .'
+          sh 'docker login -u=janduchnowski -p=robot273' 
+          sh 'docker tag janduchnowski/mr janduchnowski/mr:${GIT_COMMIT}'
+          sh 'docker push janduchnowski/mr:${GIT_COMMIT}'
+  }
+}
+
+
+    stage('Deploy') {
+        when {
+            expression { 
+            env.BRANCH_NAME == 'main' 
+           }
+        }
+
+    steps {
+
+        script {         
+          sh 'docker build --tag janduchnowski/main .'
+          sh 'docker login -u=janduchnowski -p=robot273' 
+          sh 'docker tag janduchnowski/main janduchnowski/main:latest'
+          sh 'docker push janduchnowski/main:latest'
+
+        }
+      }
+
+    }
+  }
+}
